@@ -1,5 +1,7 @@
 # Enhanced Rich Presence for MusicBee
 
+Cloned from my [Main Repo](https://gitlab.com/cleaninfla/musicbee-rich-presence)
+
 This plugin allows you to share your currently playing song, time remanining, play status, and automatically upload artworks for use on Discord.
 
 ![Example Screenshot](https://i.imgur.com/F3udPi3.png)
