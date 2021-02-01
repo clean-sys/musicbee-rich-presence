@@ -78,28 +78,33 @@ namespace MusicBeePlugin
             }
         }
 
-        private void UpdatePresence(string artist, string track, string album, string duration, Boolean playing, int position, float volume, bool handle_artworks = false)
+        private void UpdatePresence(string artist, string track_artist, string track, string album, string duration, Boolean playing, int position, bool handle_artworks = false)
         {
             track = Utility.Utf16ToUtf8(track + " ");
-			artist = Utility.Utf16ToUtf8("by " + artist);
+            artist = Utility.Utf16ToUtf8("by " + artist);
 
-            rpc_presence.state = artist.Substring(0, artist.Length - 1);
+            rpc_presence.state = track_artist.Substring(0, track_artist.Length - 1);
             rpc_presence.details = track.Substring(0, track.Length - 1);
 
-            string to_largeText = album + " " + artist;
+            string large_text = " ";
 
-            rpc_presence.largeImageText = to_largeText.Substring(0, to_largeText.Length - 1);
+            if (string.IsNullOrEmpty(album))
+                large_text = track + " " + track_artist;
+            else
+                large_text = album + " " + artist;
 
-			char[] albumArray = album.ToCharArray();
+            rpc_presence.largeImageText = large_text.Substring(0, large_text.Length - 1);
+
+            char[] albumArray = album.ToCharArray();
 
             for (int i = 0; i < album.Length; i++)
             {
-                if (album[i] == ' ' || album[i] == ':' || album[i] == '(' || album[i] == ')') albumArray[i] = '_'; // Discord doesn't like these chars in asset names.
+                if (album[i] == ' ' || album[i] == ':' || album[i] == '(' || album[i] == ')' || album[i] == '#') albumArray[i] = '_'; // Discord doesn't like these chars in asset names.
 
-				else albumArray[i] = album[i];
-			}
+                else albumArray[i] = album[i];
+            }
 
-			string new_album = new String(albumArray).ToLower();
+            string new_album = new String(albumArray).ToLower();
 
             if (handle_artworks)
                 ProcessArtwork(new_album);
@@ -165,9 +170,10 @@ namespace MusicBeePlugin
 
         public void ReceiveNotification(string sourceFileUrl, NotificationType type)
         {
-            string artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
+            string artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.AlbumArtist);
+            string track_artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
             string track_title = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle);
-			string album = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album);
+            string album = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album);
             string duration = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.Duration);
             float volume = mbApiInterface.Player_GetVolume();
             int position = mbApiInterface.Player_GetPosition();
@@ -180,17 +186,17 @@ namespace MusicBeePlugin
                     switch (mbApiInterface.Player_GetPlayState())
                     {
                         case PlayState.Playing:
-                            UpdatePresence(artist, track_title, album, duration, true, position / 1000, volume);
+                            UpdatePresence(artist, track_artist, track_title, album, duration, true, position / 1000);
                             break;
                         case PlayState.Paused:
-                            UpdatePresence(artist, track_title, album, duration, false, 0, volume);
+                            UpdatePresence(artist, track_artist, track_title, album, duration, false, 0);
                             break;
                     }
                     break;
                 case NotificationType.TrackChanged:
-                    UpdatePresence(artist, track_title, album, duration, true, 0, volume, true);
+                    UpdatePresence(artist, track_artist, track_title, album, duration, true, 0, true);
                     break;
             }
         }
-   }
+    }
 }

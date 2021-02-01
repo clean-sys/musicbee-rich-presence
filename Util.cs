@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
 using System.Threading.Tasks;
+using System.Configuration;
 
 namespace Utils
 {
@@ -53,7 +54,6 @@ namespace Utils
             });
 
             var content = new StringContent(payload, Encoding.UTF8, "application/json");
-            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
             var response = await Plugin.http_client.PostAsync($"https://discordapp.com/api/oauth2/applications/{Plugin.discord_id}/assets", content);
 
