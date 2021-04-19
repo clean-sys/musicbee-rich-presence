@@ -1,202 +1,180 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Net.Http;
 using DiscordInterface;
 using Utils;
 using System.Net.Http.Headers;
+using System.Text.RegularExpressions;
 
 namespace MusicBeePlugin
 {
-    public partial class Plugin
-    {
-        private MusicBeeApiInterface mbApiInterface;
+	public partial class Plugin
+	{
+		private readonly PluginInfo _about = new PluginInfo();
 
-        private PluginInfo about = new PluginInfo();
+		private static DiscordRPC.RichPresence _rpcPresence = new DiscordRPC.RichPresence();
 
-        public static readonly HttpClient http_client = new HttpClient();
+		public static MusicBeeApiInterface MbApiInterface;
 
-        public static string discord_id = "Your Discord APP ID";
+		public static readonly Logger Logging = new Logger();
+		
+		public static readonly HttpClient httpClient = new HttpClient();
 
-        public static DiscordRPC.RichPresence rpc_presence = new DiscordRPC.RichPresence();
+		public const string DiscordId = "Your Discord ID";
 
-        public PluginInfo Initialise(IntPtr apiInterfacePtr)
-        {
-            mbApiInterface = new MusicBeeApiInterface();
-            mbApiInterface.Initialise(apiInterfacePtr);
-            about.PluginInfoVersion = PluginInfoVersion;
-            about.Name = "Discord Rich Presence";
-            about.Description = "A Richer Rich Presence for Musicbee.";
-            about.Author = "@cleaninfla";
-            about.TargetApplication = "";   
-            about.Type = PluginType.General;
-            about.VersionMajor = 1;  
-            about.VersionMinor = 0;
-            about.Revision = 01; 
-            about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
-            about.ConfigurationPanelHeight = 0;
+		public PluginInfo Initialise(IntPtr apiInterfacePtr)
+		{
+			MbApiInterface = new MusicBeeApiInterface();
+			MbApiInterface.Initialise(apiInterfacePtr);
+			_about.PluginInfoVersion = PluginInfoVersion;
+			_about.Name = "Discord Rich Presence";
+			_about.Description = "A Richer Rich Presence for Musicbee.";
+			_about.Author = "@cleaninfla";
+			_about.TargetApplication = "";   
+			_about.Type = PluginType.General;
+			_about.VersionMajor = 1;  
+			_about.VersionMinor = 0;
+			_about.Revision = 01; 
+			_about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
+			_about.ConfigurationPanelHeight = 0;
 
-            http_client.DefaultRequestHeaders.Add("Authorization", "Your Authorization Key");
+			httpClient.DefaultRequestHeaders.Add("Authorization", "Your MFA Token");
 
-            InitialiseDiscord();
+			InitialiseDiscord();
 
-            return about;
-        }
+			return _about;
+		}
 
-        private void InitialiseDiscord()
-        {
-            DiscordRPC.DiscordEventHandlers handlers = new DiscordRPC.DiscordEventHandlers();
-            handlers.readyCallback = HandleReadyCallback;
-            handlers.errorCallback = HandleErrorCallback;
-            handlers.disconnectedCallback = HandleDisconnectedCallback;
-            DiscordRPC.Initialize(discord_id, ref handlers, true, null);
-        }
+		private void InitialiseDiscord()
+		{
+			var handlers = new DiscordRPC.DiscordEventHandlers
+			{
+				readyCallback = HandleReadyCallback,
+				errorCallback = HandleErrorCallback,
+				disconnectedCallback = HandleDisconnectedCallback
+			};
 
-        private void HandleReadyCallback() { }
-        private void HandleErrorCallback(int errorCode, string message) { }
-        private void HandleDisconnectedCallback(int errorCode, string message) { }
 
-        private async void ProcessArtwork(string album)
-        {
-            string asset_list = await Discord.GetAssetList().ReadAsStringAsync();
+			DiscordRPC.Initialize(DiscordId, ref handlers, true, null);
+		}
 
-            string artwork_data = mbApiInterface.NowPlaying_GetArtwork();
+		private void HandleReadyCallback() { }
+		private void HandleErrorCallback(int errorCode, string message) { }
+		private void HandleDisconnectedCallback(int errorCode, string message) { }
 
-            string data_uri = "data:image/png;base64," + artwork_data;
+		private async void ProcessArtwork(string album)
+		{
+			var assetList = await Discord.GetAssetList().ReadAsStringAsync();
 
-            if (asset_list.Contains(album))
-            {
-                rpc_presence.largeImageKey = album;
-                return;
-            }
-            else
-            {
-                rpc_presence.largeImageKey = "temp_uploading";
-                await Discord.UploadAsset("1", album, data_uri);
-                rpc_presence.largeImageKey = album;
-                return;
-            }
-        }
+			var artworkData = MbApiInterface.NowPlaying_GetArtwork();
 
-        private void UpdatePresence(string artist, string track_artist, string track, string album, string duration, Boolean playing, int position, bool handle_artworks = false)
-        {
-            track = Utility.Utf16ToUtf8(track + " ");
-            artist = Utility.Utf16ToUtf8("by " + artist);
+			var dataUri = "data:image/png;base64," + artworkData;
 
-            rpc_presence.state = track_artist.Substring(0, track_artist.Length - 1);
-            rpc_presence.details = track.Substring(0, track.Length - 1);
+			var albumAssured = Utility.AssureByteSize(album, 32); //Asset keys larger than 32 bytes will cause an exception.
 
-            string large_text = " ";
+			if (assetList.Contains(albumAssured))
+			{
+				_rpcPresence.largeImageKey = albumAssured;
+				return;
+			}
+			else
+			{
+				_rpcPresence.largeImageKey = "temp_uploading";
+				await Discord.UploadAsset(albumAssured, dataUri);
+				_rpcPresence.largeImageKey = albumAssured;
+				return;
+			}
+		}
 
-            if (string.IsNullOrEmpty(album))
-                large_text = track + " " + track_artist;
-            else
-                large_text = album + " " + artist;
+		private void UpdatePresence(string artist, string trackArtist, string track, string album, string duration, bool playing, int position, int volume, bool handleArtworks = false)
+		{
+			track = Utility.Utf16ToUtf8(track + " ");
+			artist = Utility.Utf16ToUtf8("by " + artist);
+			trackArtist = Utility.Utf16ToUtf8("by " + trackArtist);
 
-            rpc_presence.largeImageText = large_text.Substring(0, large_text.Length - 1);
+			_rpcPresence.state = Utility.AssureByteSize(trackArtist.Substring(0, trackArtist.Length - 1), 128);
+			_rpcPresence.details = Utility.AssureByteSize(track.Substring(0, track.Length - 1), 128);
 
-            char[] albumArray = album.ToCharArray();
+			string largeText = " ";
 
-            for (int i = 0; i < album.Length; i++)
-            {
-                if (album[i] == ' ' || album[i] == ':' || album[i] == '(' || album[i] == ')' || album[i] == '#') albumArray[i] = '_'; // Discord doesn't like these chars in asset names.
+			if (string.IsNullOrEmpty(album))
+				largeText = track + " " + trackArtist;
+			else
+				largeText = album + " " + artist;
 
-                else albumArray[i] = album[i];
-            }
+			_rpcPresence.largeImageText = Utility.AssureByteSize(largeText.Substring(0, largeText.Length - 1), 128);
 
-            string new_album = new String(albumArray).ToLower();
+			string cleanedAlbum = Utility.SanitizeAlbumName(album);
 
-            if (handle_artworks)
-                ProcessArtwork(new_album);
+			if (handleArtworks)
+				ProcessArtwork(cleanedAlbum);
 
-            long now = (long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+			long now = (long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
 
-            if (playing)
-            {
-                rpc_presence.startTimestamp = now - position;
+			if (playing)
+			{
+				_rpcPresence.startTimestamp = now - position;
 
-                string[] durations = duration.Split(':');
+				string[] durations = duration.Split(':');
+				long end = System.Convert.ToInt64(durations[0]) * 60 + System.Convert.ToInt64(durations[1]);
 
-                long end = System.Convert.ToInt64(durations[0]) * 60 + System.Convert.ToInt64(durations[1]);
+				_rpcPresence.endTimestamp = _rpcPresence.startTimestamp + end;
+				_rpcPresence.smallImageKey = "playing";
+				_rpcPresence.smallImageText = "Playing at " + volume.ToString() + "%";
+			}
+			else
+			{
+				_rpcPresence.endTimestamp = 0;
+				_rpcPresence.startTimestamp = 0;
+				_rpcPresence.smallImageKey = "paused";
+				_rpcPresence.smallImageText = "Paused";
+			}
 
-                rpc_presence.endTimestamp = rpc_presence.startTimestamp + end;
+			DiscordRPC.UpdatePresence(ref _rpcPresence);
+		}
 
-                rpc_presence.smallImageKey = "playing";
-                rpc_presence.smallImageText = "Playing";
-            }
+		public void Close(PluginCloseReason reason)
+		{
+			DiscordRPC.Shutdown();
+		}
 
-            else
-            {
-                rpc_presence.endTimestamp = 0;
-                rpc_presence.startTimestamp = 0;
-                rpc_presence.smallImageKey = "paused";
-                rpc_presence.smallImageText = "Paused";
-            }
+		public void ReceiveNotification(string sourceFileUrl, NotificationType type)
+		{
+			string artist = MbApiInterface.NowPlaying_GetFileTag(MetaDataType.AlbumArtist);
+			string trackArtist = MbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
+			string trackTitle = MbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle);
+			string album = MbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album);
+			string duration = MbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.Duration);
+			int volume = Convert.ToInt32(MbApiInterface.Player_GetVolume() * 100.0f);
+			int position = MbApiInterface.Player_GetPosition();
 
-            DiscordRPC.UpdatePresence(ref rpc_presence);
-        }
+			if (string.IsNullOrEmpty(artist))
+				artist = "[artist empty]";
 
-        public bool Configure(IntPtr panelHandle)
-        {
-            string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
-            
-            if (panelHandle != IntPtr.Zero)
-            {
-                Panel configPanel = (Panel)Panel.FromHandle(panelHandle);
-                Label prompt = new Label();
-                prompt.AutoSize = true;
-                prompt.Location = new Point(0, 0);
-                prompt.Text = "prompt:";
-                TextBox textBox = new TextBox();
-                textBox.Bounds = new Rectangle(60, 0, 100, textBox.Height);
-                configPanel.Controls.AddRange(new Control[] { prompt, textBox });
-            }
-            return false;
-        }
+			switch (type)
+			{
+				case NotificationType.PlayStateChanged:
+					switch (MbApiInterface.Player_GetPlayState())
+					{
+						case PlayState.Playing:
+							UpdatePresence(artist, trackArtist, trackTitle, album, duration, true, position / 1000, volume);
+							break;
+						case PlayState.Paused:
+							UpdatePresence(artist, trackArtist, trackTitle, album, duration, false, 0, volume);
+							break;
+					}
+					break;
 
-        public void SaveSettings()
-        {
-            string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
-        }
+				case NotificationType.TrackChanged:
+					UpdatePresence(artist, trackArtist, trackTitle, album, duration, true, 0, volume, true);
+					break;
 
-        public void Close(PluginCloseReason reason)
-        {
-            DiscordRPC.Shutdown();
-        }
-
-        public void Uninstall()
-        {
-        }
-
-        public void ReceiveNotification(string sourceFileUrl, NotificationType type)
-        {
-            string artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.AlbumArtist);
-            string track_artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
-            string track_title = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle);
-            string album = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album);
-            string duration = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.Duration);
-            float volume = mbApiInterface.Player_GetVolume();
-            int position = mbApiInterface.Player_GetPosition();
-
-            if (string.IsNullOrEmpty(artist)) { artist = "[artist empty]"; }
-
-            switch (type)
-            {
-                case NotificationType.PlayStateChanged:
-                    switch (mbApiInterface.Player_GetPlayState())
-                    {
-                        case PlayState.Playing:
-                            UpdatePresence(artist, track_artist, track_title, album, duration, true, position / 1000);
-                            break;
-                        case PlayState.Paused:
-                            UpdatePresence(artist, track_artist, track_title, album, duration, false, 0);
-                            break;
-                    }
-                    break;
-                case NotificationType.TrackChanged:
-                    UpdatePresence(artist, track_artist, track_title, album, duration, true, 0, true);
-                    break;
-            }
-        }
-    }
+				case NotificationType.VolumeLevelChanged:
+					if (MbApiInterface.Player_GetPlayState() == PlayState.Playing)
+							UpdatePresence(artist, trackArtist, trackTitle, album, duration, true, position / 1000, volume);
+					break;
+			}
+		}
+	}
 }

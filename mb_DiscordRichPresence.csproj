@@ -88,6 +88,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DiscordInterface.cs" />
+    <Compile Include="Models.cs" />
     <Compile Include="MusicBeeInterface.cs" />
     <Compile Include="mb_DiscordRichPresence.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
