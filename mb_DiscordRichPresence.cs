@@ -30,7 +30,7 @@ namespace MusicBeePlugin
 			_about.PluginInfoVersion = PluginInfoVersion;
 			_about.Name = "Discord Rich Presence";
 			_about.Description = "A Richer Rich Presence for Musicbee.";
-			_about.Author = "@cleaninfla";
+			_about.Author = "@maybeclean";
 			_about.TargetApplication = "";   
 			_about.Type = PluginType.General;
 			_about.VersionMajor = 1;  
