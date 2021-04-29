@@ -39,7 +39,7 @@ namespace MusicBeePlugin
 			_about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
 			_about.ConfigurationPanelHeight = 0;
 
-			httpClient.DefaultRequestHeaders.Add("Authorization", "Your MFA Token");
+			httpClient.DefaultRequestHeaders.Add("Authorization", DiscordToken.GetAuthToken());
 
 			InitialiseDiscord();
 

