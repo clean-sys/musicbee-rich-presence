@@ -9,7 +9,7 @@ This plugin allows you to share your currently playing song, time remanining, pl
 - MusicBee v3.x
 - Visual C++ Redistributable for Visual Studio 2019
 
-### Creating a Discord Developer App
+## Creating a Discord Developer App
 
 This step is needed if your want the plugin to upload and use your artworks.
 
