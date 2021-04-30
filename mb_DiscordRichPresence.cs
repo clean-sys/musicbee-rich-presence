@@ -6,11 +6,15 @@ using DiscordInterface;
 using Utils;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
+using IniParser;
+using IniParser.Model;
 
 namespace MusicBeePlugin
 {
 	public partial class Plugin
 	{
+		private static FileIniDataParser iniParser = new FileIniDataParser();
+
 		private readonly PluginInfo _about = new PluginInfo();
 
 		private static DiscordRPC.RichPresence _rpcPresence = new DiscordRPC.RichPresence();
@@ -21,10 +25,13 @@ namespace MusicBeePlugin
 		
 		public static readonly HttpClient httpClient = new HttpClient();
 
-		public const string DiscordId = "Your Discord ID";
+		public static string DiscordId = "";
 
 		public PluginInfo Initialise(IntPtr apiInterfacePtr)
 		{
+			IniData data = iniParser.ReadFile(@"C:\\MusicBee-RichPresence\\Configuration.ini");
+			DiscordId = data["Discord"]["AppID"].ToString();
+
 			MbApiInterface = new MusicBeeApiInterface();
 			MbApiInterface.Initialise(apiInterfacePtr);
 			_about.PluginInfoVersion = PluginInfoVersion;
