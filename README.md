@@ -17,7 +17,10 @@ This plugin allows you to share your currently playing song, time remanining, pl
   - Copy the DLL files to the `MusicBee\Plugins` directory (most likely `C:\Program Files (x86)\MusicBee\Plugins` or `%appdata%\MusicBee\Plugins`)
   - Re/start MusicBee
 
-## Getting your Authorization Token (Required for next step)
+## Getting your Authorization Token (No longer required)
+
+(As of commit [1e0467c](https://github.com/maybeclean/musicbee-rich-presence/commit/1e0467c6b90b90871c3ef1e3ce430d87f1a34ede) this step is no longer required, if you expierence problem's with token grabbing from discord you can always manually set it yourself at [line 42](https://github.com/maybeclean/musicbee-rich-presence/blob/master/mb_DiscordRichPresence.cs#L42))
+
 - Go to [Discord's developer application page](https://discordapp.com/developers/applications/me)
 - Open your browser's developer tools and head to the "network" tab.
 - Refresh the page and then click on a request.
@@ -34,7 +37,6 @@ This step is needed if your want the plugin to upload and use your artworks.
 - Create a new app. Call it whatever you want it to show after "playing".
 - Copy the client ID (located in the *app details* section)
 - Paste it into [line 24 of the main file](https://github.com/maybeclean/musicbee-rich-presence/blob/master/mb_DiscordRichPresence.cs#L24)
-- Paste the MFA token you saved from the last step into [line 42](https://github.com/maybeclean/musicbee-rich-presence/blob/master/mb_DiscordRichPresence.cs#L24)
 - Make sure to add your own Playing / Paused icons. (Keys are both 'playing' and 'paused' respectively).
 - Compile & Profit?
 
