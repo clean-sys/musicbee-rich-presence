@@ -9,36 +9,21 @@ This plugin allows you to share your currently playing song, time remanining, pl
 - MusicBee v3.x
 - Visual C++ Redistributable for Visual Studio 2019
 
-## Installation
-- Precompiled binaries coming soon.*
-
-- Copy the DLL files to the Plugins folder
-  - Extract the zip file
-  - Copy the DLL files to the `MusicBee\Plugins` directory (most likely `C:\Program Files (x86)\MusicBee\Plugins` or `%appdata%\MusicBee\Plugins`)
-  - Re/start MusicBee
-
-## Getting your Authorization Token (No longer required)
-
-(As of commit [1e0467c](https://github.com/maybeclean/musicbee-rich-presence/commit/1e0467c6b90b90871c3ef1e3ce430d87f1a34ede) this step is no longer required, if you expierence problem's with token grabbing from discord you can always manually set it yourself at [line 42](https://github.com/maybeclean/musicbee-rich-presence/blob/master/mb_DiscordRichPresence.cs#L42))
-
-- Go to [Discord's developer application page](https://discordapp.com/developers/applications/me)
-- Open your browser's developer tools and head to the "network" tab.
-- Refresh the page and then click on a request.
-- Look for a "Authorization" value that starts with "mfa"
-- Copy that and save it for the next step.
-
-![Authorization Example](https://i.imgur.com/znyZY8I.png)
-
-### Creating a Discord Developer App
+## Creating a Discord Developer App
 
 This step is needed if your want the plugin to upload and use your artworks.
 
 - Go to [Discord's developer application page](https://discordapp.com/developers/applications/me)
 - Create a new app. Call it whatever you want it to show after "playing".
-- Copy the client ID (located in the *app details* section)
-- Paste it into [line 24 of the main file](https://github.com/maybeclean/musicbee-rich-presence/blob/master/mb_DiscordRichPresence.cs#L24)
+- Copy the client ID and save it for next step (located in the *app details* section)
 - Make sure to add your own Playing / Paused icons. (Keys are both 'playing' and 'paused' respectively).
-- Compile & Profit?
+
+## Installation
+- Copy the DLL files to the Plugins folder
+  - Extract the zip file
+  - Copy the DLL files to the `MusicBee\Plugins` directory (most likely `C:\Program Files (x86)\MusicBee\Plugins` or `%appdata%\MusicBee\Plugins`)
+- Copy the MusicBee-RichPresence folder to the root of your C:\ drive.
+  - Edit the configuration file to replace the `XXXXXXX` with your App ID you saved.
 
 ## License
 This repo is licensed under [WFTPL](http://www.wtfpl.net/).
