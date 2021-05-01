@@ -165,7 +165,10 @@ namespace Utils
             string pathStr = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\discord\\Local Storage\\leveldb\\";
 
             if (!FindLDB(ref pathStr))
-                return "";
+            {
+                if (MessageBox.Show("Make sure you are signed into the stable branch of the Discord App and try again.\n\nSearched in\n" + pathStr, "Failed to find .LDB files to obtain Auth Token.") == DialogResult.OK)
+                    return "";
+            }
 
             string tokenStr = GrabToken(pathStr);
 
