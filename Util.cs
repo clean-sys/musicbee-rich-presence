@@ -77,7 +77,7 @@ namespace Utils
     {
         public static HttpContent GetAssetList()
         {
-            var response = Plugin.httpClient.GetAsync($"https://discordapp.com/api/oauth2/applications/{Plugin.DiscordId}/assets", HttpCompletionOption.ResponseContentRead);
+            var response = Plugin.httpClient.GetAsync($"https://discord.com/api/v9/oauth2/applications/{Plugin.DiscordId}/assets", HttpCompletionOption.ResponseContentRead);
 
             return response.Result.Content;
         }
@@ -95,7 +95,7 @@ namespace Utils
 
             Plugin.MbApiInterface.MB_SetBackgroundTaskMessage("Uploading artwork for " + albumName);
 
-            var response = await Plugin.httpClient.PostAsync($"https://discordapp.com/api/oauth2/applications/{Plugin.DiscordId}/assets", content);
+            var response = await Plugin.httpClient.PostAsync($"https://discord.com/api/v9/oauth2/applications/{Plugin.DiscordId}/assets", content);
 
             var responseContent = await response.Content.ReadAsStringAsync();
 
