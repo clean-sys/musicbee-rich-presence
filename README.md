@@ -19,11 +19,17 @@ This step is needed if your want the plugin to upload and use your artworks.
 - Make sure to add your own Playing / Paused icons. (Keys are both 'playing' and 'paused' respectively).
 
 ## Installation
-- Copy the DLL files to the Plugins folder
-  - Extract the zip file
-  - Copy the DLL files to the `MusicBee\Plugins` directory (most likely `C:\Program Files (x86)\MusicBee\Plugins` or `%appdata%\MusicBee\Plugins`)
-- Copy the MusicBee-RichPresence folder to the root of your C:\ drive.
-  - Edit the configuration file to replace the `XXXXXXX` with your App ID you saved.
+Method 1: 
+
+- Extract all files to a folder and run install.bat
+- Upon starting up MusicBee you will be greeted with a Message Box that instructs you to configure your Discord Application ID.
+- Musicbee will then restart and the plugin should now be ready.
+
+Method 2:
+
+- Manually copy all files to your MusicBee Plugins directory
+- Upon starting up MusicBee you will be greeted with a Message Box that instructs you to configure your Discord Application ID.
+- Musicbee will then restart and the plugin should now be ready.
 
 ## License
 This repo is licensed under [WFTPL](http://www.wtfpl.net/).
