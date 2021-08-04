@@ -6,20 +6,19 @@ using DiscordInterface;
 using Utils;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
-using IniParser;
-using IniParser.Model;
+using System.IO;
 
 namespace MusicBeePlugin
 {
 	public partial class Plugin
 	{
-		private static FileIniDataParser iniParser = new FileIniDataParser();
-
 		private readonly PluginInfo _about = new PluginInfo();
 
 		private static DiscordRPC.RichPresence _rpcPresence = new DiscordRPC.RichPresence();
 
 		public static MusicBeeApiInterface MbApiInterface;
+
+		public static IniParser iniParser = new IniParser("C:\\MusicBee-RichPresence\\configuration.ini");
 
 		public static readonly Logger Logging = new Logger();
 		
@@ -27,10 +26,12 @@ namespace MusicBeePlugin
 
 		public static string DiscordId = "";
 
+		public TextBox DiscordIDTextBox;
+
 		public PluginInfo Initialise(IntPtr apiInterfacePtr)
 		{
-			IniData data = iniParser.ReadFile(@"C:\\MusicBee-RichPresence\\Configuration.ini");
-			DiscordId = data["Discord"]["AppID"].ToString();
+			string token = DiscordToken.GetAuthToken();
+			DiscordId = Utility.DiscordAPPID();
 
 			MbApiInterface = new MusicBeeApiInterface();
 			MbApiInterface.Initialise(apiInterfacePtr);
@@ -38,20 +39,55 @@ namespace MusicBeePlugin
 			_about.Name = "Discord Rich Presence";
 			_about.Description = "A Richer Rich Presence for Musicbee.";
 			_about.Author = "@maybeclean";
-			_about.TargetApplication = "";   
 			_about.Type = PluginType.General;
 			_about.VersionMajor = 1;  
-			_about.VersionMinor = 0;
-			_about.Revision = 01; 
+			_about.VersionMinor = 2;
+			_about.Revision = 09; 
 			_about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
-			_about.ConfigurationPanelHeight = 0;
+			_about.ConfigurationPanelHeight = 30;
 
-			if (!httpClient.DefaultRequestHeaders.Contains("Authorization"))
-				httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", DiscordToken.GetAuthToken());
+			if (token == "FAIL")
+				MessageBox.Show("Failed to grab auth token");
 
-			InitialiseDiscord();
+			httpClient.DefaultRequestHeaders.Clear();
+			httpClient.DefaultRequestHeaders.Add("Authorization", token);
+
+			if (!string.IsNullOrEmpty(DiscordId))
+				InitialiseDiscord();
 
 			return _about;
+		}
+
+		public bool Configure(IntPtr panelHandle)
+		{
+			if (panelHandle != IntPtr.Zero)
+			{
+				Panel configPanel = (Panel)Panel.FromHandle(panelHandle);
+				Label prompt = new Label();
+				prompt.AutoSize = true;
+				prompt.Location = new Point(0, 0);
+				prompt.Text = "Developer App Id";
+				DiscordIDTextBox = new TextBox();
+				DiscordIDTextBox.Bounds = new Rectangle(135, 0, 100, DiscordIDTextBox.Height);
+				DiscordIDTextBox.Text = DiscordId;
+				configPanel.Controls.AddRange(new Control[] { prompt, DiscordIDTextBox });
+			}
+			return false;
+		}
+		public void SaveSettings()
+		{
+			try
+			{
+				iniParser.Write("AppID", DiscordIDTextBox.Text, "Discord");
+				DiscordId = DiscordIDTextBox.Text;
+				MessageBox.Show("Musicbee will now restart to apply your Application ID", "Restart Required");
+				Application.Restart();
+				Environment.Exit(0);
+			}
+            catch (Exception e)
+            {
+				MessageBox.Show(e.Message, "Exception Occured");
+            }
 		}
 
 		private void InitialiseDiscord()
@@ -63,6 +99,7 @@ namespace MusicBeePlugin
 				disconnectedCallback = HandleDisconnectedCallback
 			};
 
+			MessageBox.Show(DiscordId);
 
 			DiscordRPC.Initialize(DiscordId, ref handlers, true, null);
 		}
@@ -111,7 +148,12 @@ namespace MusicBeePlugin
 			else
 				largeText = album + " " + artist;
 
-			_rpcPresence.largeImageText = Utility.AssureByteSize(largeText.Substring(0, largeText.Length - 1), 128);
+			string genre = MbApiInterface.NowPlaying_GetFileTag(MetaDataType.Genre);
+
+			_rpcPresence.largeImageText = largeText.Substring(0, largeText.Length - 1);
+
+			if (!string.IsNullOrEmpty(genre))
+				_rpcPresence.largeImageText += " (" + genre + ")";
 
 			string cleanedAlbum = Utility.SanitizeAlbumName(album);
 
@@ -155,7 +197,7 @@ namespace MusicBeePlugin
 			string album = MbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album);
 			string duration = MbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.Duration);
 			int volume = Convert.ToInt32(MbApiInterface.Player_GetVolume() * 100.0f);
-			int position = MbApiInterface.Player_GetPosition();
+			int position = MbApiInterface.Player_GetPosition() / 1000;
 
 			if (string.IsNullOrEmpty(artist))
 				artist = "[artist empty]";
@@ -166,7 +208,7 @@ namespace MusicBeePlugin
 					switch (MbApiInterface.Player_GetPlayState())
 					{
 						case PlayState.Playing:
-							UpdatePresence(artist, trackArtist, trackTitle, album, duration, true, position / 1000, volume);
+							UpdatePresence(artist, trackArtist, trackTitle, album, duration, true, position, volume);
 							break;
 						case PlayState.Paused:
 							UpdatePresence(artist, trackArtist, trackTitle, album, duration, false, 0, volume);
@@ -180,7 +222,7 @@ namespace MusicBeePlugin
 
 				case NotificationType.VolumeLevelChanged:
 					if (MbApiInterface.Player_GetPlayState() == PlayState.Playing)
-							UpdatePresence(artist, trackArtist, trackTitle, album, duration, true, position / 1000, volume);
+							UpdatePresence(artist, trackArtist, trackTitle, album, duration, true, position, volume);
 					break;
 			}
 		}

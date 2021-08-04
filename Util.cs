@@ -4,12 +4,12 @@ using System.Text;
 using System.Net.Http;
 using MusicBeePlugin;
 using System.Net.Http.Headers;
-using Newtonsoft.Json;
 using System.IO;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace Utils
 {
@@ -35,7 +35,6 @@ namespace Utils
             }
         }
 
-
         public static string AssureByteSize(string input, int maxLength)
         {
             for (var i = input.Length - 1; i >= 0; i--)
@@ -47,15 +46,6 @@ namespace Utils
             }
 
             return string.Empty;
-        }
-
-        public static string HashAlbum(string text)
-        {
-            if (string.IsNullOrEmpty(text))
-                return text;
-
-            var hashed = BitConverter.ToString(new System.Security.Cryptography.SHA256Managed().ComputeHash(System.Text.Encoding.UTF8.GetBytes(text))).Replace("-", string.Empty);
-            return AssureByteSize(hashed, 10);
         }
 
         public static string SanitizeAlbumName(string albumName)
@@ -70,6 +60,19 @@ namespace Utils
             var newAlbum = new string(albumArray).ToLower();
 
             return newAlbum;
+        }
+
+        public static string DiscordAPPID()
+        {
+            string app_id = Plugin.iniParser.Read("AppID", "Discord");
+
+            if (string.IsNullOrEmpty(app_id))
+            {
+                MessageBox.Show("Add your Discord Application ID for the Plugin in [Preferences -> Plugins]", "Failed to read Application ID");
+                return string.Empty;
+            }
+
+            return app_id;
         }
     }
 
@@ -100,9 +103,9 @@ namespace Utils
             var responseContent = await response.Content.ReadAsStringAsync();
 
             if (responseContent.Contains(albumName))
-                Plugin.MbApiInterface.MB_SetBackgroundTaskMessage("Successfully uploaded artwork.");
+                Plugin.MbApiInterface.MB_SetBackgroundTaskMessage($"Successfully Uploaded Artwork for {albumName}");
             else
-                Plugin.MbApiInterface.MB_SetBackgroundTaskMessage("Artwork upload failed, check log.");
+                Plugin.MbApiInterface.MB_SetBackgroundTaskMessage($"Failed Artwork Upload for {albumName}");
 
             Plugin.Logging.LogWrite(responseContent);
         }
@@ -132,7 +135,7 @@ namespace Utils
                 }
             }
 
-            return authToken;
+            return authToken != "" ? authToken : "FAIL";
         }
         private static bool findLdb(ref string levelDB)
         {
@@ -171,7 +174,7 @@ namespace Utils
             string pathStr = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\discord\\Local Storage\\leveldb\\";
 
             if (!findLdb(ref pathStr))
-                return "";
+                return "FAIL";
 
             string tokenStr = grabToken(pathStr);
 
