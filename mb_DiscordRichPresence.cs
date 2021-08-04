@@ -99,8 +99,6 @@ namespace MusicBeePlugin
 				disconnectedCallback = HandleDisconnectedCallback
 			};
 
-			MessageBox.Show(DiscordId);
-
 			DiscordRPC.Initialize(DiscordId, ref handlers, true, null);
 		}
 
