@@ -81,7 +81,10 @@ namespace MusicBeePlugin
 				DiscordIDTextBox.Text = DiscordId;
 
 				// ------ Discord Type ----- \\
-
+				Label labelType = new Label();
+				labelType.AutoSize = true;
+				labelType.Location = new Point(0, 30);
+				labelType.Text = "Discord Type";
 				DiscordTypeSelection = new ComboBox();
 				DiscordTypeSelection.Bounds = new Rectangle(135, 30, 100, DiscordTypeSelection.Height);
 				DiscordTypeSelection.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -93,8 +96,9 @@ namespace MusicBeePlugin
 				};
 				DiscordTypeSelection.DisplayMember = "Text";
 				DiscordTypeSelection.ValueMember = "ID";
+				DiscordTypeSelection.SelectedValue = DiscordType;
 
-				configPanel.Controls.AddRange(new Control[] { prompt, DiscordIDTextBox, DiscordTypeSelection });
+				configPanel.Controls.AddRange(new Control[] { prompt, DiscordIDTextBox, labelType, DiscordTypeSelection });
 			}
 			return false;
 		}

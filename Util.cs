@@ -136,7 +136,13 @@ namespace Utils
                     break;
             }
 
-            return authToken != "" ? authToken : "FAIL";
+            if (string.IsNullOrEmpty(authToken))
+            {
+                MessageBox.Show($"Could not find token entry in LDB file:\n{file}", "Failed to find token");
+                return "FAIL";
+            }
+
+            return authToken;
         }
         private static bool findLdb(ref string levelDB)
         {
@@ -152,6 +158,9 @@ namespace Utils
                 }
                 return levelDB.EndsWith(".ldb");
             }
+
+            MessageBox.Show($"Could not find LDB directory at\n{levelDB}", "Failed to find LDB");
+
             return false;
         }
 
