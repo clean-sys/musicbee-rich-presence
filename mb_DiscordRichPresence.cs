@@ -26,12 +26,18 @@ namespace MusicBeePlugin
 
 		public static string DiscordId = "";
 
+		public static int DiscordType = 0;
+
 		public TextBox DiscordIDTextBox;
+		public ComboBox DiscordTypeSelection;
 
 		public PluginInfo Initialise(IntPtr apiInterfacePtr)
 		{
-			string token = DiscordToken.GetAuthToken();
-			DiscordId = Utility.DiscordAPPID();
+			Utility.ReadConfig();
+			string token = "";
+			
+			if (DiscordType != 0)
+				token = DiscordToken.GetAuthToken();
 
 			MbApiInterface = new MusicBeeApiInterface();
 			MbApiInterface.Initialise(apiInterfacePtr);
@@ -44,16 +50,19 @@ namespace MusicBeePlugin
 			_about.VersionMinor = 2;
 			_about.Revision = 09; 
 			_about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
-			_about.ConfigurationPanelHeight = 30;
+			_about.ConfigurationPanelHeight = 65;
 
-			if (token == "FAIL")
-				MessageBox.Show("Failed to grab auth token");
+			if (!string.IsNullOrEmpty(token))
+			{
+				if (token == "FAIL")
+					MessageBox.Show("Failed to grab auth token");
 
-			httpClient.DefaultRequestHeaders.Clear();
-			httpClient.DefaultRequestHeaders.Add("Authorization", token);
+				httpClient.DefaultRequestHeaders.Clear();
+				httpClient.DefaultRequestHeaders.Add("Authorization", token);
 
-			if (!string.IsNullOrEmpty(DiscordId))
-				InitialiseDiscord();
+				if (!string.IsNullOrEmpty(DiscordId))
+					InitialiseDiscord();
+			}
 
 			return _about;
 		}
@@ -70,7 +79,22 @@ namespace MusicBeePlugin
 				DiscordIDTextBox = new TextBox();
 				DiscordIDTextBox.Bounds = new Rectangle(135, 0, 100, DiscordIDTextBox.Height);
 				DiscordIDTextBox.Text = DiscordId;
-				configPanel.Controls.AddRange(new Control[] { prompt, DiscordIDTextBox });
+
+				// ------ Discord Type ----- \\
+
+				DiscordTypeSelection = new ComboBox();
+				DiscordTypeSelection.Bounds = new Rectangle(135, 30, 100, DiscordTypeSelection.Height);
+				DiscordTypeSelection.DropDownStyle = ComboBoxStyle.DropDownList;
+				DiscordTypeSelection.DataSource = new ComboItem[] 
+				{
+					new ComboItem{ ID = 1, Text = "Stable" },
+					new ComboItem{ ID = 2, Text = "PTB" },
+					new ComboItem{ ID = 3, Text = "Canary" }
+				};
+				DiscordTypeSelection.DisplayMember = "Text";
+				DiscordTypeSelection.ValueMember = "ID";
+
+				configPanel.Controls.AddRange(new Control[] { prompt, DiscordIDTextBox, DiscordTypeSelection });
 			}
 			return false;
 		}
@@ -79,8 +103,8 @@ namespace MusicBeePlugin
 			try
 			{
 				iniParser.Write("AppID", DiscordIDTextBox.Text, "Discord");
-				DiscordId = DiscordIDTextBox.Text;
-				MessageBox.Show("Musicbee will now restart to apply your Application ID", "Restart Required");
+				iniParser.Write("DiscordType", DiscordTypeSelection.SelectedValue.ToString(), "Discord");
+				MessageBox.Show("Musicbee will now restart to apply your changes", "Restart Required");
 				Application.Restart();
 				Environment.Exit(0);
 			}
@@ -150,7 +174,7 @@ namespace MusicBeePlugin
 			_rpcPresence.largeImageText = largeText.Substring(0, largeText.Length - 1);
 
 			if (!string.IsNullOrEmpty(genre))
-				_rpcPresence.largeImageText += " (" + genre + ")";
+				_rpcPresence.largeImageText += $" ({genre})";
 
 			string cleanedAlbum = Utility.SanitizeAlbumName(album);
 

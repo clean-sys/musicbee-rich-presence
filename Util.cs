@@ -62,17 +62,21 @@ namespace Utils
             return newAlbum;
         }
 
-        public static string DiscordAPPID()
+        public static void ReadConfig()
         {
-            string app_id = Plugin.iniParser.Read("AppID", "Discord");
+            string ConfDiscordID = Plugin.iniParser.Read("AppID", "Discord");
+            string ConfDiscordType = Plugin.iniParser.Read("DiscordType", "Discord");
 
-            if (string.IsNullOrEmpty(app_id))
-            {
+            Plugin.DiscordId = ConfDiscordID;
+
+            if (string.IsNullOrEmpty(ConfDiscordID))
                 MessageBox.Show("Add your Discord Application ID for the Plugin in [Preferences -> Plugins]", "Failed to read Application ID");
-                return string.Empty;
-            }
 
-            return app_id;
+            if (!string.IsNullOrEmpty(ConfDiscordType))
+                Plugin.DiscordType = Convert.ToInt32(ConfDiscordType);
+
+            if (Plugin.DiscordType == 0)
+                MessageBox.Show("Add your Discord Type for the Plugin in [Preferences -> Plugins]", "Failed to read Discord Type");
         }
     }
 
@@ -119,20 +123,17 @@ namespace Utils
             string fileContents = Encoding.UTF8.GetString(bytes);
             string authToken = "";
 
-            if (fileContents.Contains("token"))
+            string[] array = cleanArray(fileContents).Split(new char[]
             {
-                string[] array = cleanArray(fileContents).Split(new char[]
-                {
-                    '"'
-                });
+                '"'
+            });
 
-                for (int i = 0; i < array.Length; i++)
-                {
-                    authToken = array[i];
+            for (int i = 0; i < array.Length; i++)
+            {
+                authToken = array[i];
 
-                    if (authToken.StartsWith("mfa."))
-                        break;
-                }
+                if (authToken.StartsWith("mfa."))
+                    break;
             }
 
             return authToken != "" ? authToken : "FAIL";
@@ -143,7 +144,7 @@ namespace Utils
             {
                 foreach (FileInfo fileInfo in new DirectoryInfo(levelDB).GetFiles())
                 {
-                    if (fileInfo.Name.EndsWith(".ldb") && File.ReadAllText(fileInfo.FullName).Contains("token"))
+                    if (fileInfo.Name.EndsWith(".ldb") && (File.ReadAllText(fileInfo.FullName).Contains("\"mfa.")))
                     {
                         levelDB += fileInfo.Name;
                         return levelDB.EndsWith(".ldb");
@@ -171,12 +172,35 @@ namespace Utils
 
         public static string GetAuthToken()
         {
-            string pathStr = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\discord\\Local Storage\\leveldb\\";
+            string pathStrStable = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\discord\\Local Storage\\leveldb\\";
+            string pathStrBeta = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\discordptb\\Local Storage\\leveldb\\";
+            string pathStrCanary = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\discordcanary\\Local Storage\\leveldb\\";
+            string tokenStr = "";
 
-            if (!findLdb(ref pathStr))
-                return "FAIL";
+            switch (Plugin.DiscordType)
+            {
+                case 1:
+                    if (!findLdb(ref pathStrStable))
+                        return "FAIL";
 
-            string tokenStr = grabToken(pathStr);
+                    tokenStr = grabToken(pathStrStable);
+
+                    break;
+                case 2:
+                    if (!findLdb(ref pathStrBeta))
+                        return "FAIL";
+
+                    tokenStr = grabToken(pathStrBeta);
+
+                    break;
+                case 3:
+                    if (!findLdb(ref pathStrCanary))
+                        return "FAIL";
+
+                    tokenStr = grabToken(pathStrCanary);
+
+                    break;
+            }
 
             return tokenStr;
         }
@@ -219,4 +243,11 @@ namespace Utils
             }
         }
     }
+
+    class ComboItem
+    {
+        public int ID { get; set; }
+        public string Text { get; set; }
+    }
+
 }
