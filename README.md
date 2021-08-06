@@ -22,13 +22,13 @@ This step is needed if your want the plugin to upload and use your artworks.
 Method 1: 
 
 - Extract all files to a folder and run install.bat
-- Upon starting up MusicBee you will be greeted with a Message Box that instructs you to configure your Discord Application ID.
+- Upon starting up MusicBee you will be greeted with a Message Box that instructs you to configure your Discord Application ID and Branch.
 - Musicbee will then restart and the plugin should now be ready.
 
 Method 2:
 
 - Manually copy all files to your MusicBee Plugins directory
-- Upon starting up MusicBee you will be greeted with a Message Box that instructs you to configure your Discord Application ID.
+- Upon starting up MusicBee you will be greeted with a Message Box that instructs you to configure your Discord Application ID and Branch.
 - Musicbee will then restart and the plugin should now be ready.
 
 ## License
