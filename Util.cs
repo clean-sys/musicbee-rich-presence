@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using System.Linq;
 
 namespace Utils
 {
@@ -117,98 +118,43 @@ namespace Utils
 
     public class DiscordToken
     {
-        private static string grabToken(string file)
+        public static string GetDiscordDirectory()
         {
-            byte[] bytes = File.ReadAllBytes(file);
-            string fileContents = Encoding.UTF8.GetString(bytes);
-            string authToken = "";
-
-            string[] array = cleanArray(fileContents).Split(new char[]
-            {
-                '"'
-            });
-
-            for (int i = 0; i < array.Length; i++)
-            {
-                authToken = array[i];
-
-                if (authToken.StartsWith("mfa."))
-                    break;
-            }
-
-            if (string.IsNullOrEmpty(authToken))
-            {
-                MessageBox.Show($"Could not find token entry in LDB file:\n{file}", "Failed to find token");
-                return "FAIL";
-            }
-
-            return authToken;
-        }
-        private static bool findLdb(ref string levelDB)
-        {
-            if (Directory.Exists(levelDB))
-            {
-                foreach (FileInfo fileInfo in new DirectoryInfo(levelDB).GetFiles())
-                {
-                    if (fileInfo.Name.EndsWith(".ldb") && (File.ReadAllText(fileInfo.FullName).Contains("\"mfa.")))
-                    {
-                        levelDB += fileInfo.Name;
-                        return levelDB.EndsWith(".ldb");
-                    }
-                }
-                return levelDB.EndsWith(".ldb");
-            }
-
-            MessageBox.Show($"Could not find LDB directory at\n{levelDB}", "Failed to find LDB");
-
-            return false;
-        }
-
-        private static string cleanArray(string path)
-        {
-            string[] array = path.Substring(path.IndexOf("token") + 4).Split(new char[]
-            {
-                '"'
-            });
-
-            List<string> list = new List<string>();
-            list.AddRange(array);
-            list.RemoveAt(0);
-
-            array = list.ToArray();
-            return string.Join("\"", array);
-        }
-
-        public static string GetAuthToken()
-        {
-            string pathStrStable = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\discord\\Local Storage\\leveldb\\";
-            string pathStrBeta = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\discordptb\\Local Storage\\leveldb\\";
-            string pathStrCanary = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\discordcanary\\Local Storage\\leveldb\\";
-            string tokenStr = "";
+            string directory = "";
 
             switch (Plugin.DiscordType)
             {
                 case 1:
-                    if (!findLdb(ref pathStrStable))
-                        return "FAIL";
-
-                    tokenStr = grabToken(pathStrStable);
-
+                    directory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\discord\\Local Storage\\leveldb\\";
                     break;
                 case 2:
-                    if (!findLdb(ref pathStrBeta))
-                        return "FAIL";
-
-                    tokenStr = grabToken(pathStrBeta);
-
+                    directory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\discordptb\\Local Storage\\leveldb\\";
                     break;
                 case 3:
-                    if (!findLdb(ref pathStrCanary))
-                        return "FAIL";
-
-                    tokenStr = grabToken(pathStrCanary);
-
+                    directory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\discordcanary\\Local Storage\\leveldb\\";
                     break;
+                default:
+                    directory = "FAIL";
+                    break;
+            }
+
+            return directory;
+        }
+        public static string GetAuthToken()
+        {
+            string tokenStr = "";
+            DirectoryInfo directoryRoot = new DirectoryInfo(GetDiscordDirectory());
+
+            foreach (var file in directoryRoot.GetFiles("*.ldb").OrderBy(f => f.LastWriteTime))
+            {
+                string fileOut = file.OpenText().ReadToEnd();
+                Match mfaMatch = Regex.Match(fileOut, @"mfa\.[\w-]{84}");
+
+                if (mfaMatch.Success)
+                {
+                    tokenStr = mfaMatch.Value;
+                    break;
+                }
             }
 
             return tokenStr;
