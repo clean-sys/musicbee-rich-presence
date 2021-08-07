@@ -65,16 +65,16 @@ namespace Utils
 
         public static void ReadConfig()
         {
-            string ConfDiscordID = Plugin.iniParser.Read("AppID", "Discord");
-            string ConfDiscordType = Plugin.iniParser.Read("DiscordType", "Discord");
+            string confDiscordId = Plugin.IniParser.Read("AppID", "Discord");
+            string confDiscordType = Plugin.IniParser.Read("DiscordType", "Discord");
 
-            Plugin.DiscordId = ConfDiscordID;
+            Plugin.DiscordId = confDiscordId;
 
-            if (string.IsNullOrEmpty(ConfDiscordID))
+            if (string.IsNullOrEmpty(confDiscordId))
                 MessageBox.Show("Add your Discord Application ID for the Plugin in [Preferences -> Plugins]", "Failed to read Application ID");
 
-            if (!string.IsNullOrEmpty(ConfDiscordType))
-                Plugin.DiscordType = Convert.ToInt32(ConfDiscordType);
+            if (!string.IsNullOrEmpty(confDiscordType))
+                Plugin.DiscordType = Convert.ToInt32(confDiscordType);
 
             if (Plugin.DiscordType == 0)
                 MessageBox.Show("Add your Discord Type for the Plugin in [Preferences -> Plugins]", "Failed to read Discord Type");
@@ -85,7 +85,7 @@ namespace Utils
     {
         public static HttpContent GetAssetList()
         {
-            var response = Plugin.httpClient.GetAsync($"https://discord.com/api/v9/oauth2/applications/{Plugin.DiscordId}/assets", HttpCompletionOption.ResponseContentRead);
+            var response = Plugin.HttpClient.GetAsync($"https://discord.com/api/v9/oauth2/applications/{Plugin.DiscordId}/assets", HttpCompletionOption.ResponseContentRead);
 
             return response.Result.Content;
         }
@@ -103,7 +103,7 @@ namespace Utils
 
             Plugin.MbApiInterface.MB_SetBackgroundTaskMessage("Uploading artwork for " + albumName);
 
-            var response = await Plugin.httpClient.PostAsync($"https://discord.com/api/v9/oauth2/applications/{Plugin.DiscordId}/assets", content);
+            var response = await Plugin.HttpClient.PostAsync($"https://discord.com/api/v9/oauth2/applications/{Plugin.DiscordId}/assets", content);
 
             var responseContent = await response.Content.ReadAsStringAsync();
 
@@ -120,7 +120,7 @@ namespace Utils
     {
         public static string GetDiscordDirectory()
         {
-            string directory = "";
+            string directory;
 
             switch (Plugin.DiscordType)
             {
@@ -201,7 +201,7 @@ namespace Utils
 
     class ComboItem
     {
-        public int ID { get; set; }
+        public int Id { get; set; }
         public string Text { get; set; }
     }
 
