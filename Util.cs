@@ -36,6 +36,23 @@ namespace Utils
             }
         }
 
+        public static string ValidateEncoding(string album)
+        {
+            // Discord only accepts ASCII strings for assets, this converts Unicode strings to an ASCII hash that gets trimmed down later on.
+
+            bool isUnicode = Encoding.GetEncoding(0).GetString(Encoding.GetEncoding(0).GetBytes(album)) != album;
+
+            if (!isUnicode)
+                return album;
+
+            using (var sha = new System.Security.Cryptography.SHA256Managed())
+            {
+                byte[] textData = Encoding.Unicode.GetBytes(album);
+                byte[] hash = sha.ComputeHash(textData);
+                return BitConverter.ToString(hash).Replace("-", String.Empty);
+            }
+        }
+
         public static string AssureByteSize(string input, int maxLength)
         {
             for (var i = input.Length - 1; i >= 0; i--)

@@ -144,7 +144,7 @@ namespace MusicBeePlugin
         {
         }
 
-        private async void ProcessArtwork(string album)
+        private async void ProcessArtwork(string album, string hash = "")
         {
             var assetList = await Discord.GetAssetList().ReadAsStringAsync();
 
@@ -152,8 +152,7 @@ namespace MusicBeePlugin
 
             var dataUri = "data:image/png;base64," + artworkData;
 
-            var albumAssured =
-                Utility.AssureByteSize(album, 32); //Asset keys larger than 32 bytes will cause an exception.
+            var albumAssured = Utility.AssureByteSize(album, 32); //Asset keys larger than 32 bytes will cause an exception.
 
             if (assetList.Contains(albumAssured))
             {
@@ -187,7 +186,7 @@ namespace MusicBeePlugin
             if (!string.IsNullOrEmpty(genre))
                 _rpcPresence.largeImageText += $" ({genre})";
 
-            string cleanedAlbum = Utility.SanitizeAlbumName(album);
+            string cleanedAlbum = Utility.SanitizeAlbumName(Utility.ValidateEncoding(album));
 
             if (handleArtworks)
                 ProcessArtwork(cleanedAlbum);
